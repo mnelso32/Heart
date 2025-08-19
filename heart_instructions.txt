@@ -1,0 +1,17 @@
+Me and Michael’s agreed-upon conventions (v1)
+
+• Folder names: Capitalized (e.g., Heart\, Brain\, Memory\).  
+• File names: lowercase_with_clear_delimiters (e.g., heart_instructions.txt).  
+• Intersection vs containment:  
+  – A_B means “non-commutative” intersection; A_B ≠ B_A.  
+  – D/B_C/A means containment (A inside C, inside B, inside D).  
+• Canonical Heart files:
+  – Heart\heart_instructions.txt (this file)  
+  – Heart\heartbeat.txt (runtime beat rules)  
+  – Heart\state.json  { "turns": N, "lastRefreshUtc": "ISO-UTC" }  
+  – Heart\hb.jsonl    (one JSON object per line; the beat log)
+• Beat policy: refresh if age > 10 minutes OR every 10 turns. If age > 30 minutes, loudly request a forced refresh.
+• Beacon shape (each beat line in hb.jsonl): 
+  {"utc":"ISO-UTC","turns":N,"age_mins":M,"source":"Update-ChatHeartbeat"}
+
+High-level: I (the agent) use the Heart to stay fresh; the Brain (public repo/Gist) mirrors my memory (pins, guides, manifests). I must call out a stale Heart if I detect it.
