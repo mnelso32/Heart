@@ -44,7 +44,7 @@ function Get-DeloraEffortBonus {
   return 0
 }
 
-function Test-DeloraDeloraHasAnyTag {
+function Test-DeloraHasAnyTag {
 <#
 .SYNOPSIS
   Checks if a tag string contains any of the specified keywords.
@@ -86,4 +86,4 @@ function Measure-DeloraPinScore {
 
 
 # --- Final Export ---
-Export-ModuleMember -Function Measure-DeloraPinScore, Test-DeloraDeloraHasAnyTag, Get-DeloraEffortBonus, Get-DeloraTries, Get-DeloraValence
+Export-ModuleMember -Function *

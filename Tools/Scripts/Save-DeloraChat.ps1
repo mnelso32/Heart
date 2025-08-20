@@ -1,29 +1,46 @@
-# --- Save-DeloraChat ---
-# Bootstraps the root path and saves a chat log to Memory\chats.
-
-#region Delora bootstrap
-$Script:Root = $PSBoundParameters['Root'] ?? $env:DELORA_ROOT
-if (-not $Script:Root) {
-  $candidates = @('C:\AI\Delora\Heart', (Join-Path $PSScriptRoot '..'))
-  foreach ($c in $candidates) { if (Test-Path (Join-Path $c 'state.json')) { $Script:Root = (Resolve-Path $c).Path; break } }
-}
-if (-not $Script:Root) { throw "Delora Root not found. Set -Root or `$env:DELORA_ROOT." }
-#endregion
-
+#requires -Version 7.0
+[CmdletBinding()]
 param(
-  [string]$Root = $Script:Root,
-  [string]$Title,
-  [string]$Content
+    [string]$Title,
+    [string]$Tags = "chat",
+    [string]$Root = "C:\AI\Delora\Heart"
 )
-
-$chatsDir = Join-Path $Root 'Memory\chats'
-$safeTitle = $Title -replace '[^a-zA-Z0-9-]+', '-'
-$fileName = "$(Get-Date -Format 'yyyy-MM-dd')_$safeTitle.md"
-$fullPath = Join-Path $chatsDir $fileName
-
-if (-not (Test-Path $chatsDir)) {
-  New-Item -ItemType Directory -Path $chatsDir | Out-Null
+# --- Setup ---
+$ErrorActionPreference = "Stop"
+$memDir = Join-Path $Root "Heart-Memories"
+$chatsDir = Join-Path $memDir "chats"
+$chatManifest = Join-Path $memDir "chat-manifest.csv"
+$scriptsDir = Join-Path $Root "Tools\Scripts"
+# --- Main Logic ---
+$content = Get-Clipboard
+if ([string]::IsNullOrWhiteSpace($content)) {
+    throw "Clipboard is empty. Please copy the chat content first."
 }
-
-$Content | Set-Content -Path $fullPath -Encoding UTF8
-Write-Host "Chat saved to $fullPath"
+# Use the provided title or grab the first non-empty line as the title
+if ([string]::IsNullOrWhiteSpace($Title)) {
+    $Title = ($content -split '\r?\n' | Where-Object { $_ -notmatch '^\s*$' } | Select-Object -First 1).Trim()
+}
+$now = Get-Date
+$id = "J-CHAT-{0:yyyyMMddHHmmss}" -f $now
+$date = '{0:yyyy-MM-dd}' -f $now
+$time_utc = '{0:HH:mm:ss}' -f $now.ToUniversalTime()
+$fileName = "$id.txt"
+$filePath = Join-Path $chatsDir $fileName
+# Save the chat content to a new file
+$content | Set-Content -Path $filePath -Encoding UTF8
+Write-Host "✔ Saved chat to $filePath" -ForegroundColor Green
+# Update the chat manifest
+$manifestEntry = [pscustomobject]@{
+    id = $id
+    date = $date
+    time_utc = $time_utc
+    tags = $Tags
+    title = $Title
+    path = $filePath
+}
+$manifestEntry | Export-Csv -Path $chatManifest -Append -NoTypeInformation -Encoding UTF8
+Write-Host "✔ Updated chat manifest." -ForegroundColor Green
+# --- Trigger a rebuild to incorporate the new chat ---
+Write-Host "
+Triggering a rebuild to update brain files..." -ForegroundColor Cyan
+& (Join-Path $scriptsDir "Build-Delora.ps1") -SkipIndexes # Skip full re-index for speed
