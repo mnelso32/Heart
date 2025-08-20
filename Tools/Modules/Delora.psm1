@@ -1,10 +1,10 @@
-# Janus.psm1
-# This module contains the high-level application logic for the Janus AI project,
+# Delora.psm1
+# This module contains the high-level application logic for the Delora AI project,
 # such as memory scoring and content analysis.
 
 # --- Content Analysis & Scoring ---
 
-function Get-JanusValence {
+function Get-DeloraValence {
 <#
 .SYNOPSIS
   Parses a 'valence:+N' score from a tags string.
@@ -16,7 +16,7 @@ function Get-JanusValence {
   return 0
 }
 
-function Get-JanusTries {
+function Get-DeloraTries {
 <#
 .SYNOPSIS
   Parses a 'tries:N' count from a tags string.
@@ -28,7 +28,7 @@ function Get-JanusTries {
   return 0
 }
 
-function Get-JanusEffortBonus {
+function Get-DeloraEffortBonus {
 <#
 .SYNOPSIS
   Calculates a score bonus based on an 'effort:HH:MM' tag.
@@ -44,7 +44,7 @@ function Get-JanusEffortBonus {
   return 0
 }
 
-function Test-JanusHasAnyTag {
+function Test-DeloraDeloraHasAnyTag {
 <#
 .SYNOPSIS
   Checks if a tag string contains any of the specified keywords.
@@ -60,7 +60,7 @@ function Test-JanusHasAnyTag {
   return $false
 }
 
-function Measure-JanusPinScore {
+function Measure-DeloraPinScore {
 <#
 .SYNOPSIS
   Calculates a comprehensive "importance" score for a memory pin.
@@ -70,20 +70,20 @@ function Measure-JanusPinScore {
   )
   $prio = 0; try { $prio = [int]$Pin.priority } catch {}
   $tags = [string]$Pin.tags
-  $score = $prio + (Get-JanusValence $tags)
+  $score = $prio + (Get-DeloraValence $tags)
   
   # Add bonuses for impactful tags
-  if (Test-JanusHasAnyTag -Tags $tags -TagSet @('milestone', 'rule', 'automation', 'publish', 'recall')) { $score += 1 }
-  if (Test-JanusHasAnyTag -Tags $tags -TagSet @('first', 'breakthrough', 'unblocked')) { $score += 1 }
+  if (Test-DeloraHasAnyTag -Tags $tags -TagSet @('milestone', 'rule', 'automation', 'publish', 'recall')) { $score += 1 }
+  if (Test-DeloraHasAnyTag -Tags $tags -TagSet @('first', 'breakthrough', 'unblocked')) { $score += 1 }
   if ($Pin.type -eq 'event') { $score += 1 }
   
   # Add bonuses for effort
-  $score += Get-JanusTries $tags
-  $score += Get-JanusEffortBonus $tags
+  $score += Get-DeloraTries $tags
+  $score += Get-DeloraEffortBonus $tags
 
   return $score
 }
 
 
 # --- Final Export ---
-Export-ModuleMember -Function *
+Export-ModuleMember -Function Measure-DeloraPinScore, Test-DeloraDeloraHasAnyTag, Get-DeloraEffortBonus, Get-DeloraTries, Get-DeloraValence

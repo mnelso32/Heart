@@ -1,101 +1,86 @@
-# --- Write-DeloraMemory ---
-# Processes memory sources (pins, chats) and builds the Delora_memory.txt
-# file and the memory_manifest.csv.
+#requires -Version 7.0
 
-#region Delora bootstrap
-$Script:Root = $PSBoundParameters['Root'] ?? $env:DELORA_ROOT
-if (-not $Script:Root) {
-  $candidates = @('C:\AI\Delora\Heart', (Join-Path $PSScriptRoot '..'))
-  foreach ($c in $candidates) { if (Test-Path (Join-Path $c 'state.json')) { $Script:Root = (Resolve-Path $c).Path; break } }
-}
-if (-not $Script:Root) { throw "Delora Root not found. Set -Root or `$env:DELORA_ROOT." }
-#endregion
-
+[CmdletBinding()]
 param(
-  [string]$Root = $Script:Root,
-  [string]$MemDirRel = "Memory",
-  [int]$MaxCoreItems = 300
+    [string]$Root = "C:\AI\Delora\Heart"
 )
 
 # --- Setup ---
 $ErrorActionPreference = "Stop"
-$MemDir = Join-Path $Root $MemDirRel
-$PinsCsv = Join-Path $MemDir "pins.csv"
-$ChatsDir = Join-Path $MemDir "chats"
-$OutTxt = Join-Path $MemDir "Delora_memory.txt"
-$ManifestCsv = Join-Path $MemDir "memory_manifest.csv"
+$toolsDir = Join-Path $Root "Tools"
+$memDir = Join-Path $Root "Heart-Memories"
+$chatsDir = Join-Path $memDir "chats"
+$pinsCsv = Join-Path $memDir "pins.csv"
+$chatManifest = Join-Path $memDir "chat-manifest.csv"
+$outTxt = Join-Path $memDir "delora-memory.txt"
+$modulePath = Join-Path $toolsDir 'Modules\Delora'
+Import-Module -Name $modulePath -Force
 
-# --- Helpers ---
-function HashFile([string]$p) { try { (Get-FileHash -Algorithm SHA256 -Path $p).Hash } catch { "" } }
-function Canon([string]$s) { if ($null -eq $s) { return "" }; return ($s -replace '\s+', ' ' -replace '[\u0000-\u001F]', '').Trim() }
-function Parse-Valence([string]$v) { if (-not $v) { return 0 }; if ($v -match '([+-]?\d+)') { return [int]$matches[1] }; return 0 }
-function Get-ValenceNudge([string]$tags, [string]$valenceColumn = $null) {
-  if ($valenceColumn) { return (Parse-Valence $valenceColumn) }
-  if ($tags -match 'valence:(?<n>[+\-]?\d)') { return [int]$Matches.n }
-  return 0
+New-Item -ItemType Directory -Force -Path $memDir, $chatsDir | Out-Null
+if (-not (Test-Path $pinsCsv)) {
+    @'
+id,priority,type,date,tags,title,content,source
+J-SEED-0001,5,rule,,ops;memory,"How to edit pins","Edit Heart-Memories/pins.csv and rerun this script.",local
+'@ | Set-Content -Path $pinsCsv -Encoding UTF8
 }
 
-# --- Data Loading and Processing ---
-$pins = Import-Csv $PinsCsv
-$pinsScored = $pins | ForEach-Object {
-  $prio = [int]($_.priority)
-  $val = Get-ValenceNudge -tags $_.tags
-  [pscustomobject]@{
-    id = $_.id; priority = $prio; type = $_.type; date = $_.date; tags = $_.tags
-    title = $_.title; content = $_.content; source = $_.source
-    score = $prio + $val
-  }
-}
-
-$items = $pinsScored
-$core = $items | Sort-Object @{ E = 'score'; D = $true }, @{ E = 'id'; A = $true } | Select-Object -First $MaxCoreItems
-$events = $items | Where-Object { $_.type -eq 'event' -and $_.date } | Sort-Object date
-
-# Build keyword map
-$stopWords = @('the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'as', 'at', 'it', 'this', 'that')
-$kwMap = @{}
-foreach ($item in $items) {
-  $words = "$($item.title) $($item.tags) $($item.content)" -split '[^A-Za-z0-9_+-]+' |
-    Where-Object { $_ -and ($stopWords -notcontains $_.ToLower()) -and $_.Length -gt 2 } |
-    Select-Object -Unique
-  foreach ($word in $words) {
-    if (-not $kwMap.ContainsKey($word)) { $kwMap[$word] = New-Object System.Collections.Generic.List[string] }
-    $kwMap[$word].Add($item.id)
-  }
-}
-
-# Index chat files
-$chats = Get-ChildItem -Path $ChatsDir -File | Sort-Object Name
-$chatRows = foreach ($c in $chats) {
-  $firstLine = (Get-Content -Path $c.FullName -TotalCount 10 -Encoding UTF8) -join ' '
-  [pscustomobject]@{
-    Path = $c.FullName; RelPath = ($c.FullName.Replace($Root, '').TrimStart('\')); SizeBytes = $c.Length
-    LastWriteUtc = $c.LastWriteTimeUtc.ToString('yyyy-MM-dd HH:mm:ss'); SHA256 = (HashFile $c.FullName)
-    Preview = (Canon $firstLine)
-  }
-}
-
-# --- Build Output Text ---
+# --- Budget and Output ---
+[int]$script:BudgetKB = 500
+[int]$script:budgetBytes = $script:BudgetKB * 1024
 $sb = [System.Text.StringBuilder]::new()
-$null = $sb.AppendLine("===== Delora Global Memory — $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') =====")
-$null = $sb.AppendLine()
-$null = $sb.AppendLine("== Root: $Root")
-$null = $sb.AppendLine("== Sections: CORE MEMORY · TIMELINE · CHAT INDEX · KEYWORD MAP ==")
-$null = $sb.AppendLine("=================================================================")
-$null = $sb.AppendLine()
-$null = $sb.AppendLine("=====  CORE MEMORY (top-priority first)  =====")
-foreach ($c in $core) { $null = $sb.AppendLine("[{0}] (prio {1}) {2}" -f $c.id, $c.score, $c.title) }
-$null = $sb.AppendLine()
-$null = $sb.AppendLine("=====  TIMELINE (events by date)  =====")
-# ... timeline output logic can be added here ...
-$null = $sb.AppendLine()
-$null = $sb.AppendLine("=====  CHAT INDEX (files in Memory\chats\)  =====")
-foreach ($r in $chatRows) { $null = $sb.AppendLine("- $($r.RelPath) | $($r.LastWriteUtc) | $($r.SizeBytes) bytes") }
-$null = $sb.AppendLine()
-$null = $sb.AppendLine("=====  KEYWORD MAP (keyword → memory ids)  =====")
-$kwMap.GetEnumerator() | Sort-Object Name | ForEach-Object { $null = $sb.AppendLine("$($_.Name): $($_.Value -join ',')") }
 
-$sb.ToString() | Set-Content -Path $OutTxt -Encoding UTF8
-$items | Export-Csv -Path $ManifestCsv -NoTypeInformation
+# --- Data Loading ---
+$pins = Import-Csv $pinsCsv
+$pinsScored = $pins | ForEach-Object {
+    $_ | Add-Member -NotePropertyName "score" -NotePropertyValue (Measure-DeloraPinScore $_) -PassThru
+}
 
-Write-Host "Delora memory assets updated at $MemDir"
+# --- Compose Text File ---
+$stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+$sb.AppendLine("===== Delora Core Memory — $stamp =====") | Out-Null
+$sb.AppendLine("== Root: $Root") | Out-Null
+$sb.AppendLine("=================================================================") | Out-Null
+$sb.AppendLine("") | Out-Null
+
+# -- CORE MEMORY (top-scored first) --
+$sb.AppendLine("--- CORE MEMORY (top priority first) ---") | Out-Null
+$coreMemory = $pinsScored | Sort-Object @{Expression='score';Descending=$true}, @{Expression='id';Ascending=$true}
+foreach ($pin in $coreMemory) {
+    if ($sb.Length -gt $script:budgetBytes) { break }
+    $sb.AppendLine(("[{0}] (prio {1}) {2}" -f $pin.id, $pin.priority, (Format-DeloraCleanText $pin.title))) | Out-Null
+}
+$sb.AppendLine("") | Out-Null
+
+# -- CHAT INDEX (from manifest) --
+$sb.AppendLine("--- CHAT INDEX (files in Heart-Memories/chats) ---") | Out-Null
+if (Test-Path $chatManifest) {
+    $chatIndex = Import-Csv $chatManifest | Sort-Object date, time_utc -Descending | Select-Object -First 50
+    foreach ($c in $chatIndex) {
+        if ($sb.Length -gt $script:budgetBytes) { break }
+        $sb.AppendLine(("[{0}] {1} {2}" -f $c.id, $c.date, (Format-DeloraCleanText $c.title))) | Out-Null
+    }
+}
+$sb.AppendLine("") | Out-Null
+
+# -- KEYWORD MAP (from pins) --
+$sb.AppendLine("--- KEYWORD MAP (from memory ids) ---") | Out-Null
+$kwMap = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[string]]]::new()
+foreach ($m in $pins) {
+    $keywords = ($m.tags -split '[;,]').Trim() | Where-Object { $_.Length -gt 1 }
+    foreach ($kw in $keywords) {
+        if (-not $kwMap.ContainsKey($kw)) { $kwMap[$kw] = [System.Collections.Generic.List[string]]::new() }
+        $kwMap[$kw].Add($m.id)
+    }
+}
+$kwMap.GetEnumerator() | Sort-Object Name | ForEach-Object {
+    if ($sb.Length -gt $script:budgetBytes) { return } # Cannot use break in ForEach-Object
+    $line = "{0, -20} :: {1}" -f $_.Name, ($_.Value -join ', ')
+    $sb.AppendLine($line) | Out-Null
+}
+
+# --- Finalize and Write Output ---
+if ($sb.Length -gt $script:budgetBytes) {
+    $sb.AppendLine("...(truncated: memory file hit ~$($script:BudgetKB)KB budget)...") | Out-Null
+}
+$sb.ToString() | Set-Content -Path $outTxt -Encoding UTF8
+Write-Host "✔ Wrote Delora memory file: $outTxt" -ForegroundColor Green

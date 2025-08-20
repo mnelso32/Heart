@@ -2,7 +2,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$Root = "C:\AI\Janus\JHeart"
+    [string]$Root = "C:\AI\Delora\Heart"
 )
 
 # --- Setup ---
@@ -14,8 +14,8 @@ $listingCsv = Join-Path $brainDir "brain-listing.csv"
 $prevListingCsv = Join-Path $brainDir "brain-listing_prev.csv"
 
 # The module is now located inside the Tools directory
-$modulePath = Join-Path $toolsDir 'Modules\Janus'
-Import-Module -Name $modulePath -Force
+$modulePath = Join-Path $toolsDir 'Modules\Delora'
+Import-Module -Name $modulePath -Force 
 
 # --- Main Logic ---
 
@@ -25,7 +25,7 @@ Write-Host "Scanning file structure..." -ForegroundColor Cyan
 $allFiles = Get-ChildItem -Path $Root -Recurse -File -Exclude ".git" -ErrorAction SilentlyContinue | ForEach-Object {
     [pscustomobject]@{
         Path = $_.FullName
-        RelativePath = Get-JanusRelativePath -Path $_.FullName -Root $Root
+        RelativePath = Get-DeloraRelativePath -Path $_.FullName -Root $Root
         SizeBytes = $_.Length
         LastWriteUtc = $_.LastWriteTimeUtc
     }
@@ -49,7 +49,7 @@ $sb = [System.Text.StringBuilder]::new()
 
 # Header
 $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-[void]$sb.AppendLine("===== Janus Brain Map — $stamp =====")
+[void]$sb.AppendLine("===== Delora Brain Map — $stamp =====")
 [void]$sb.AppendLine("Total Files Indexed: $($allFiles.Count)")
 [void]$sb.AppendLine("="*80)
 [void]$sb.AppendLine("")

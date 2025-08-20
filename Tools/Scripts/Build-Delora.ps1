@@ -1,88 +1,57 @@
-# --- Build-Delora ---
-# Orchestrates the generation of the Delora memory bundle.
+#requires -Version 7.0
 
-#region Delora bootstrap
-$Script:Root = $PSBoundParameters['Root'] ?? $env:DELORA_ROOT
-if (-not $Script:Root) {
-  $candidates = @('C:\AI\Delora\Heart', (Join-Path $PSScriptRoot '..'))
-  foreach ($c in $candidates) { if (Test-Path (Join-Path $c 'state.json')) { $Script:Root = (Resolve-Path $c).Path; break } }
-}
-if (-not $Script:Root) { throw "Delora Root not found. Set -Root or `$env:DELORA_ROOT." }
-#endregion
-
+[CmdletBinding()]
 param(
-  [string]$Root = $Script:Root,
-  [switch]$SkipIndexes
+  [string]$Root = "C:\AI\Delora\Heart"
 )
 
-$ErrorActionPreference = "Stop"
+# --- Setup ---
+$ErrorActionPreference = 'Stop'
+$toolsDir = Join-Path $Root 'Tools'
+$scriptsDir = Join-Path $toolsDir 'Scripts'
+$modulePath = Join-Path $toolsDir 'Modules\Delora'
+Import-Module -Name $modulePath -Force
 
-# --- Paths ---
-$toolsDir       = Join-Path $Root 'tools'
-$memDir         = Join-Path $Root 'Memory'
-$indexesDir     = Join-Path $Root 'Brain\Indexes'
-$bundleDir      = Join-Path $Root 'tools\bundle'
-
-$pinsCsv        = Join-Path $memDir 'pins.csv'
-$memTxt         = Join-Path $memDir 'Delora_memory.txt'
-$manifestCsv    = Join-Path $memDir 'memory_manifest.csv'
-$recentTxt      = Join-Path $indexesDir 'recent.txt'
-$listingCsv     = Join-Path $indexesDir 'listing.csv'
-$listingPrevCsv = Join-Path $indexesDir 'listing_prev.csv'
-$changesTxt     = Join-Path $indexesDir 'changes.txt'
-
-$outBundleTxt      = Join-Path $bundleDir 'Delora_bundle.txt'
-$outManifestCsv    = Join-Path $bundleDir 'Delora_manifest.csv'
-
-# --- Pre-build steps ---
-# These scripts generate the core memory files we'll bundle.
-& (Join-Path $toolsDir 'Write-DeloraMemory.ps1') -Root $Root
-if (-not $SkipIndexes) {
-  & (Join-Path $toolsDir 'Update-BrainMap.ps1') -Root $Root
-}
-
-# --- Budget and Output Management ---
-[int]$script:BundleBudgetKB = 500
-[int]$script:budgetBytes    = $script:BundleBudgetKB * 1024
-$sb = [System.Text.StringBuilder]::new()
-$manifest = New-Object System.Collections.Generic.List[object]
-
-function Add-FileToBundle {
-  param(
-    [string]$SectionId,
-    [string]$FilePath
-  )
-  $relPath = $FilePath.Replace("$Root\", "")
-  $fileInfo = Get-Item $FilePath
-  $fileContent = Get-Content -Path $FilePath -Raw -Encoding UTF8
-
-  if (($sb.Length + $fileContent.Length) -lt $script:budgetBytes) {
-    $null = $sb.AppendLine("== $relPath")
-    $null = $sb.AppendLine($fileContent)
-    $null = $sb.AppendLine()
-    
-    $manifest.Add([pscustomobject]@{
-      SectionId    = $SectionId
-      RelPath      = $relPath
-      SizeBytes    = $fileInfo.Length
-      LastWriteUtc = $fileInfo.LastWriteTimeUtc.ToString('yyyy-MM-dd HH:mm:ss')
-      SHA256       = (Get-FileHash -Algorithm SHA256 -Path $FilePath).Hash
-    })
-    return $true
+# --- Helper ---
+function Run-ToolScript($path, $splat = @{}) {
+  try {
+    & $path @splat
+    Write-Host "✔ $(Get-Item $path | Select-Object -ExpandProperty Name)" -ForegroundColor Green
   }
-  return $false
+  catch {
+    Write-Warning "✖ $path : $($_.Exception.Message)"
+  }
 }
 
-# --- Build the Bundle ---
-New-Item -ItemType Directory -Path $bundleDir -Force | Out-Null
+# --- Main Build Process ---
+# 1. Build the core memory file
+Run-ToolScript (Join-Path $scriptsDir 'Write-DeloraMemory.ps1') @{ Root = $Root }
 
-Add-FileToBundle -SectionId "MEMORY" -FilePath $memTxt
-Add-FileToBundle -SectionId "MEMORY_MANIFEST" -FilePath $manifestCsv
-Add-FileToBundle -SectionId "RECENT_CHANGES" -FilePath $changesTxt
-Add-FileToBundle -SectionId "RECENT_FILES" -FilePath $recentTxt
+# 2. Build the brain map (file index and changes)
+Run-ToolScript (Join-Path $scriptsDir 'Update-BrainMap.ps1') @{ Root = $Root }
 
-# --- Finalize ---
-$sb.ToString() | Set-Content -Path $outBundleTxt -Encoding UTF8
-$manifest | Export-Csv -Path $outManifestCsv -NoTypeInformation
+# 3. Build the component READMEs
+Run-ToolScript (Join-Path $scriptsDir 'Write-Directories.ps1') @{ Root = $Root }
 
-Write-Host "Delora bundle created at $outBundleTxt"
+# 4. NEW: Combine memory and map into the final brain.txt
+Write-Host "Assembling final brain.txt..." -ForegroundColor Cyan
+$brainFile = Join-Path $Root 'Brain\brain.txt'
+$memoryFile = Join-Path $Root 'Heart-Memories\delora-memory.txt'
+$mapFile = Join-Path $Root 'Brain\brain-map.txt'
+
+# Add the memory file content first
+Get-Content $memoryFile | Set-Content -Path $brainFile -Encoding UTF8
+# Append the brain map content
+Get-Content $mapFile | Add-Content -Path $brainFile
+Write-Host "✔ Assembled brain.txt" -ForegroundColor Green
+
+# --- Maintenance ---
+Write-Host "`nUpdating crowns..." -ForegroundColor Cyan
+Run-ToolScript (Join-Path $scriptsDir 'Update-DeloraCrowns.ps1') @{ Scope = 'Day' }
+
+# --- Heartbeat Trigger ---
+# Note: The heartbeat script no longer publishes files. It only updates state.json.
+# The user is responsible for committing and pushing brain.txt to GitHub.
+Run-ToolScript (Join-Path $scriptsDir 'Update-State.ps1')
+
+Write-Host "`nBuild process complete." -ForegroundColor Blue

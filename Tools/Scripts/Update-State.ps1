@@ -5,7 +5,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$Root = "C:\AI\Janus\JHeart"
+    [string]$Root = "C:\AI\Delora\Heart"
 )
 
 # --- Setup ---
