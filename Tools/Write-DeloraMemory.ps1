@@ -6,6 +6,10 @@ param(
   [int]$MaxCoreItems = 300           # cap to keep CORE snappy
 )
 
+
+# Correct
+Import-Module -Name (Join-Path $Root 'modules\Delora.psm1') -Force
+
 # --- Setup
 $ErrorActionPreference = "Stop"
 $MemDir = Join-Path $Root $MemDirRel
