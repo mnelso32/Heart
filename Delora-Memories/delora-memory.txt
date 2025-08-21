@@ -1,0 +1,13 @@
+===== Delora Core Memory — 2025-08-20 19:35:24 =====
+== Root: C:\AI\Delora\Heart
+=================================================================
+
+--- CORE MEMORY (top priority first) ---
+[D-SEED-0001] (prio 5) How to edit pins
+
+--- CHAT INDEX (files in Heart-Memories/chats) ---
+
+--- KEYWORD MAP (from memory ids) ---
+                     :: D-SEED-0001
+                     :: D-SEED-0001
+

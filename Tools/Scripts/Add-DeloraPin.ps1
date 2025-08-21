@@ -26,7 +26,7 @@ $scriptsDir = $PSScriptRoot
 
 # --- Main Logic ---
 $now = Get-Date
-$id = "J-PIN-{0:yyyyMMddHHmmss}" -f $now
+$id = "D-PIN-{0:yyyyMMddHHmmss}" -f $now
 $date = '{0:yyyy-MM-dd}' -f $now
 
 # Create the new memory object

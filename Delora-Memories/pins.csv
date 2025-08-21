@@ -1,0 +1,2 @@
+id,priority,type,date,tags,title,content,source
+D-SEED-0001,5,rule,,ops;memory,"How to edit pins","Edit Heart-Memories/pins.csv and rerun this script.",local
