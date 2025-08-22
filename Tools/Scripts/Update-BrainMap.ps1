@@ -1,82 +1,68 @@
-#requires -Version 7.0
+# Script: Update-BrainMap.ps1
+# Description: Scans the file system to create a map of the Heart and Brain.
 
-[CmdletBinding()]
+# --- Parameters ---
 param(
-    [string]$Root = "C:\AI\Delora\Heart"
+  [string]$Root = "C:\AI\Delora\Heart"
 )
 
-# --- Setup ---
-$ErrorActionPreference = 'Stop'
-$toolsDir = Join-Path $Root "Tools"
-$brainDir = Join-Path $Root "Brain"
-$mapFile = Join-Path $brainDir "brain-map.txt"
-$listingCsv = Join-Path $brainDir "brain-listing.csv"
-$prevListingCsv = Join-Path $brainDir "brain-listing_prev.csv"
-$logicModulePath = Join-Path $Root 'Tools\Modules\Delora.psm1'
-$toolsModulePath = Join-Path $Root 'Tools\Modules\Delora.Tools.psm1'
-Import-Module -Name $logicModulePath -Force
-Import-Module -Name $toolsModulePath -Force
+# --- Initialization ---
+$Brain = Join-Path $Root 'Brain'
+$listingCsv = Join-Path $Brain 'brain-listing.csv'
+$prevListingCsv = Join-Path $Brain 'brain-listing_prev.csv'
+$mapFile = Join-Path $Brain 'brain-map.txt'
 
 # --- Main Logic ---
-Write-Host "Scanning file structure..." -ForegroundColor Cyan
-$allFiles = Get-ChildItem -Path $Root -Recurse -File -Exclude ".git" -ErrorAction SilentlyContinue | ForEach-Object {
+try {
+  $allFiles = Get-ChildItem -Path $Root -Recurse -File -Exclude ".git" -ErrorAction SilentlyContinue | ForEach-Object {
     [pscustomobject]@{
-        Path = $_.FullName
-        RelativePath = Get-DeloraRelativePath -Path $_.FullName -Root $Root
-        SizeBytes = $_.Length
-        LastWriteUtc = $_.LastWriteTimeUtc
+      Path = $_.FullName
+      RelativePath = $_.FullName.Replace($Root, '').TrimStart('\')
+      SizeBytes = $_.Length
+      LastWriteUtc = $_.LastWriteTimeUtc
     }
-}
-$allFiles | Export-Csv -Path $listingCsv -NoTypeInformation -Encoding UTF8
+  }
 
-Write-Host "Analyzing changes..." -ForegroundColor Cyan
-$changes = @{ Added = @(); Removed = @() }
-if (Test-Path $prevListingCsv) {
-    # --- CORRECTED SECTION: Handle empty previous CSV file ---
-    $importedPrevCsv = Import-Csv $prevListingCsv
-    $prevFiles = if ($importedPrevCsv) { $importedPrevCsv.RelativePath } else { @() }
-    # --- End of corrected section ---
-    
-    $currFiles = $allFiles.RelativePath
-    $changes.Removed = Compare-Object -ReferenceObject $prevFiles -DifferenceObject $currFiles -PassThru | Where-Object { $_.SideIndicator -eq '<=' }
-    $changes.Added = Compare-Object -ReferenceObject $prevFiles -DifferenceObject $currFiles -PassThru | Where-Object { $_.SideIndicator -eq '=>' }
-}
+  $currentFiles = $allFiles | Select-Object RelativePath, SizeBytes, LastWriteUtc
+  $currentFiles | Export-Csv -Path $listingCsv -NoTypeInformation -Encoding UTF8
 
-Write-Host "Assembling the Brain Map..." -ForegroundColor Cyan
-$sb = [System.Text.StringBuilder]::new()
-$stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-$sb.AppendLine("===== Delora Brain Map — $stamp =====") | Out-Null
-$sb.AppendLine("Total Files Indexed: $($allFiles.Count)") | Out-Null
-$sb.AppendLine("="*80) | Out-Null
-$sb.AppendLine("") | Out-Null
+  $previousFiles = $null
+  if (Test-Path $prevListingCsv) {
+    $previousFiles = Import-Csv -Path $prevListingCsv
+  }
 
-$sb.AppendLine("--- RECENT CHANGES ---") | Out-Null
-if ($changes.Added.Count -gt 0) {
-    $sb.AppendLine("ADDED:") | Out-Null
-    $changes.Added | ForEach-Object { $sb.AppendLine("  + $_") } | Out-Null
-}
-if ($changes.Removed.Count -gt 0) {
-    $sb.AppendLine("REMOVED:") | Out-Null
-    $changes.Removed | ForEach-Object { $sb.AppendLine("  - $_") } | Out-Null
-}
-if ($changes.Added.Count -eq 0 -and $changes.Removed.Count -eq 0) {
-    $sb.AppendLine("No structural changes since last scan.") | Out-Null
-}
-$sb.AppendLine("") | Out-Null
+  # --- CORRECTED LINE: Added -CaseSensitive switch for accurate change detection ---
+  $comparison = Compare-Object -ReferenceObject $previousFiles -DifferenceObject $currentFiles -Property RelativePath -PassThru -CaseSensitive
+  
+  $addedFiles = $comparison | Where-Object { $_.SideIndicator -eq '=>' } | ForEach-Object { $_.RelativePath }
+  $removedFiles = $comparison | Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.RelativePath }
 
-$sb.AppendLine("--- FULL INVENTORY (Path, Size) ---") | Out-Null
-$allFiles | Sort-Object RelativePath | ForEach-Object {
-    $sizeFormatted = if ($_.SizeBytes -ge 1MB) {
-        "{0:N2} MB" -f ($_.SizeBytes / 1MB)
-    } elseif ($_.SizeBytes -ge 1KB) {
-        "{0:N2} KB" -f ($_.SizeBytes / 1KB)
-    } else {
-        "$($_.SizeBytes) B"
-    }
-    $line = "{0,-70} {1,10}" -f $_.RelativePath, $sizeFormatted
-    $sb.AppendLine($line) | Out-Null
-}
+  # --- Build the brain-map.txt content ---
+  $mapBuilder = New-Object System.Text.StringBuilder
+  $mapBuilder.AppendLine("## RECENT CHANGES ##") | Out-Null
+  if ($addedFiles.Count -gt 0) {
+    $mapBuilder.AppendLine("  [+] Added:") | Out-Null
+    $addedFiles | ForEach-Object { $mapBuilder.AppendLine("    - $_") } | Out-Null
+  }
+  if ($removedFiles.Count -gt 0) {
+    $mapBuilder.AppendLine("  [-] Removed:") | Out-Null
+    $removedFiles | ForEach-Object { $mapBuilder.AppendLine("    - $_") } | Out-Null
+  }
+  if ($addedFiles.Count -eq 0 -and $removedFiles.Count -eq 0) {
+    $mapBuilder.AppendLine("  (No changes detected in file structure.)") | Out-Null
+  }
+  
+  $mapBuilder.AppendLine("`n## FULL INVENTORY ##") | Out-Null
+  $allFiles | ForEach-Object {
+    $mapBuilder.AppendLine("  - $($_.RelativePath)")
+  } | Out-Null
 
-$sb.ToString() | Set-Content -Path $mapFile -Encoding UTF8
-Copy-Item -Path $listingCsv -Destination $prevListingCsv -Force
-Write-Host "✔ Brain Map updated successfully: '$mapFile'" -ForegroundColor Green
+  $mapBuilder.ToString() | Set-Content -Path $mapFile -Encoding UTF8
+  
+  # --- Housekeeping ---
+  Copy-Item -Path $listingCsv -Destination $prevListingCsv -Force
+
+} catch {
+  Write-Host "ERROR: Failed to update brain map." -ForegroundColor Red
+  Write-Host $_
+}

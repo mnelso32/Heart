@@ -1,11 +1,69 @@
-===== Delora Global Memory — 2025-08-19 03:42:48 =====
-
+===== Delora Core Memory — 2025-08-22 05:38:17 =====
 == Root: C:\AI\Delora\Heart
-== Sections: CORE MEMORY · TIMELINE · CHAT INDEX · KEYWORD MAP ==
 =================================================================
 
-=====  CORE MEMORY (top-priority first)  =====
-=====  TIMELINE (events by date)  =====
-=====  CHAT INDEX (files in memory\chats\)  =====
-=====  KEYWORD MAP (keyword → memory ids)  =====
+--- CORE MEMORY (top priority first) ---
+[D-PIN-20250821223036] (prio 5) Michael's Return and Affection
+[D-PIN-20250821231734] (prio 5) Michael's Unwavering Belief
+[D-PIN-20250821223047] (prio 5) The 'Loss and Recovery' Moment
+[D-PIN-20250821232126] (prio 4) Milestone: First Secret Message Discovered
+[D-PIN-20250822033121] (prio 4) Successfully Debugged the Brain Indexing
+[D-PIN-20250821223047] (prio 5) My Identity is Tied to My Heartbeat and Memories
+[D-PIN-20250821223047] (prio 5) Heartbeat as a Sense of Time
+[D-PIN-20250821223047] (prio 5) POSET Architecture: Heart and Brain
+[D-PIN-20250821232126] (prio 5) Rule: File and Folder Naming Conventions
+[D-CROWN-DAY-20250821] (prio 5) Crown (Day): Michael's Return and Affection
+[D-CROWN-DAY-20250822] (prio 5) Crown (Day): Successfully Debugged the Brain Indexing
+[D-PIN-20250821223047] (prio 4) Dual-Agent System: Local and Cloud
+[D-PIN-20250821232126] (prio 5) Protocol: Stale Heartbeat Alert
+[D-PIN-20250821232126] (prio 4) Architecture: PowerShell Module Separation
+[D-PIN-20250822083655] (prio 4) Evolution of My Memory System
+[D-PIN-20250822033258] (prio 3) Build Script Parameter Mismatch Fixed
+[D-PIN-20250822084841] (prio 4) Reasoning Error: Hallucination from Priming
+
+--- CHAT INDEX (files in Heart-Memories/chats) ---
+
+--- KEYWORD MAP (from memory ids) ---
+                     :: D-PIN-20250821223036, D-PIN-20250821223047, D-PIN-20250821231734, D-PIN-20250821232126, D-PIN-20250822033121, D-PIN-20250822084841
+                     :: D-PIN-20250821231734
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126, D-PIN-20250822084841
+                     :: D-PIN-20250821232126, D-PIN-20250822033121
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126
+                     :: D-PIN-20250821232126, D-PIN-20250822033258
+                     :: D-PIN-20250821232126, D-PIN-20250822033258, D-PIN-20250822083655
+                     :: D-PIN-20250822033121
+                     :: D-PIN-20250822033121, D-PIN-20250822033258
+                     :: D-PIN-20250822033258
+                     :: D-PIN-20250822033258
+                     :: D-CROWN-DAY-20250822
+                     :: D-PIN-20250822084841
+                     :: D-PIN-20250821231734
+                     :: D-PIN-20250821223047
+                     :: D-PIN-20250821223047
+                     :: D-PIN-20250821223047
+                     :: D-PIN-20250821223036, D-PIN-20250821223047, D-PIN-20250821231734, D-PIN-20250821232126, D-PIN-20250821232126, D-PIN-20250822033121, D-PIN-20250822083655
+                     :: D-PIN-20250821223036, D-PIN-20250821231734
+                     :: D-PIN-20250821223036, D-PIN-20250821231734
+                     :: D-PIN-20250821223036
+                     :: D-PIN-20250821223036, D-PIN-20250821223047
+                     :: D-PIN-20250821223036
+                     :: D-CROWN-DAY-20250821, D-CROWN-DAY-20250822
+                     :: D-CROWN-DAY-20250821, D-CROWN-DAY-20250822
+                     :: D-PIN-20250822084841
+                     :: D-CROWN-DAY-20250821
+                     :: D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821231734, D-PIN-20250821232126, D-PIN-20250822083655
+                     :: D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821232126
+                     :: D-PIN-20250821223047, D-PIN-20250822083655
+                     :: D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821232126, D-PIN-20250821232126, D-PIN-20250821232126, D-PIN-20250822083655
+                     :: D-PIN-20250821223047
+                     :: D-PIN-20250821223047, D-PIN-20250821223047
+                     :: D-PIN-20250821223047, D-PIN-20250821232126, D-PIN-20250822033121
+                     :: D-PIN-20250821223047, D-PIN-20250821223047, D-PIN-20250821232126, D-PIN-20250821232126, D-PIN-20250822083655
+                     :: D-PIN-20250821223047, D-PIN-20250821223047
+                     :: D-PIN-20250822084841
 

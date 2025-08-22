@@ -8,7 +8,7 @@ param(
 # --- Setup ---
 $ErrorActionPreference = "Stop"
 $toolsDir = Join-Path $Root "Tools"
-$memDir = Join-Path $Root "Delora-Memories"
+$memDir = Join-Path $Root "Heart-Memories"
 $chatsDir = Join-Path $memDir "chats"
 $pinsCsv = Join-Path $memDir "pins.csv"
 $chatManifest = Join-Path $memDir "chat-manifest.csv"

@@ -1,56 +1,53 @@
-#requires -Version 7.0
+# Script: Add-DeloraPin.ps1
+# Description: Adds a new memory pin to the pins.csv file.
 
-[CmdletBinding()]
+# --- Parameters ---
 param(
-    [Parameter(Mandatory, HelpMessage = 'A short, descriptive title for the memory.')]
-    [string]$Title,
-
-    [Parameter(Mandatory, HelpMessage = 'The full content of the memory.')]
-    [string]$Content,
-
-    [string]$Tags = "",
-    [string]$Type = "fact",
-    [int]$Priority = 3,
-    [string]$Source = "manual",
-    [string]$Root = "C:\AI\Delora\Heart"
+  [Parameter(Mandatory=$true)][string]$Title,
+  [Parameter(Mandatory=$true)][string]$Content,
+  [string]$Tags = "",
+  [string]$Type = "note",
+  [int]$Priority = 3,
+  [string]$Source = "local",
+  [switch]$SkipIndexes,
+  # --- NEW --- Added an optional parameter for sentiment.
+  [string]$Sentiment = "" 
 )
 
-# --- Setup ---
-$ErrorActionPreference = "Stop"
-$memDir = Join-Path $Root "Heart-Memories"
-$pinsCsv = Join-Path $memDir "pins.csv"
-# --- CORRECTED SECTION: Use the script's own location to find sibling scripts ---
-$scriptsDir = $PSScriptRoot
-# --- End of corrected section ---
-
+# --- Initialization ---
+$PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+$Root = Split-Path -Path $PSScriptRoot -Parent | Split-Path -Parent
+$pinsCsv = Join-Path $Root "Heart-Memories\pins.csv"
+$buildScript = Join-Path $PSScriptRoot "Build-Delora.ps1"
 
 # --- Main Logic ---
-$now = Get-Date
-$id = "D-PIN-{0:yyyyMMddHHmmss}" -f $now
-$date = '{0:yyyy-MM-dd}' -f $now
+try {
+  $utcDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+  $timestamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
+  $id = "D-PIN-$timestamp"
 
-# Create the new memory object
-$newPin = [pscustomobject]@{
+  $newPin = [pscustomobject]@{
     id = $id
     priority = $Priority
     type = $Type
-    date = $date
+    date = $utcDate
     tags = $Tags
     title = $Title
     content = $Content
     source = $Source
-}
+    # --- NEW --- Added the new Sentiment property to the object.
+    Sentiment = $Sentiment
+  }
 
-# Append the new pin to the CSV file
-$newPin | Export-Csv -Path $pinsCsv -Append -NoTypeInformation -Encoding UTF8
-Write-Host "✔ Successfully added new pin '$id' to $pinsCsv" -ForegroundColor Green
+  $newPin | Export-Csv -Path $pinsCsv -Append -NoTypeInformation -Encoding UTF8
+  Write-Host "✔ Successfully added new pin '$id'" -ForegroundColor Green
+  
+  # --- Housekeeping ---
+  if (-not $SkipIndexes) {
+    & $buildScript -SkipMemory -SkipCrowns -SkipState
+  }
 
-# --- Trigger a rebuild to incorporate the new memory ---
-Write-Host "`nTriggering a rebuild to update brain files..." -ForegroundColor Cyan
-try {
-    & (Join-Path $scriptsDir "Build-Delora.ps1") -SkipIndexes # Skip full re-index for speed
-    Write-Host "✔ Rebuild complete." -ForegroundColor Green
 } catch {
-    Write-Warning "Rebuild failed. Run Build-Delora.ps1 manually."
-    Write-Warning $_.Exception.Message
+  Write-Host "ERROR: Failed to add new pin." -ForegroundColor Red
+  Write-Host $_
 }
