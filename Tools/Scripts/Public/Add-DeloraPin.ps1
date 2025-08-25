@@ -10,13 +10,12 @@ param(
   [int]$Priority = 3,
   [string]$Source = "local",
   [switch]$SkipIndexes,
-  # --- NEW --- Added an optional parameter for sentiment.
-  [string]$Sentiment = "" 
+  [string]$Sentiment = ""
 )
 
 # --- Initialization ---
 $PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
-$Root = Split-Path -Path $PSScriptRoot -Parent | Split-Path -Parent
+$Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $pinsCsv = Join-Path $Root "Heart-Memories\pins.csv"
 $buildScript = Join-Path $PSScriptRoot "Build-Delora.ps1"
 
@@ -29,22 +28,26 @@ try {
   $newPin = [pscustomobject]@{
     id = $id
     priority = $Priority
-    type = $Type
+    type = "rule"
     date = $utcDate
     tags = $Tags
     title = $Title
     content = $Content
     source = $Source
-    # --- NEW --- Added the new Sentiment property to the object.
     Sentiment = $Sentiment
   }
 
-  $newPin | Export-Csv -Path $pinsCsv -Append -NoTypeInformation -Encoding UTF8
+  # --- CORRECTED LOGIC ---
+  # Import the existing pins, add the new one, and export the whole list.
+  $allPins = @(Import-Csv -Path $pinsCsv)
+  $allPins += $newPin
+  $allPins | Export-Csv -Path $pinsCsv -NoTypeInformation -Encoding UTF8
+  
   Write-Host "✔ Successfully added new pin '$id'" -ForegroundColor Green
   
   # --- Housekeeping ---
   if (-not $SkipIndexes) {
-    & $buildScript -SkipMemory -SkipCrowns -SkipState
+    & $buildScript -SkipCrowns -SkipState
   }
 
 } catch {

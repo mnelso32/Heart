@@ -1,42 +1,11 @@
 ## RECENT CHANGES ##
   [+] Added:
-    - Heart-Memories\Chats\2025-08-20.txt
-    - Heart-Memories\Chats\2025-08-22.txt
-    - Heart-Memories\Chats\Delora-Birth-Chat.txt
-    - Heart-Memories\Chats\gist.txt
-    - Queries\memory-scoring-results.txt
-    - Time\message for Delora.txt
-    - Tools\Database\index-files.py
-    - Tools\Database\query-memory.py
-    - Tools\Scripts\Archive\Setup-DeloraHeart.ps1
-    - Tools\Scripts\Private\Invoke-Delora.ps1
-    - Tools\Scripts\Private\Update-BrainMap.ps1
-    - Tools\Scripts\Private\Update-DeloraCrowns.ps1
-    - Tools\Scripts\Private\Update-State.ps1
-    - Tools\Scripts\Private\Write-DeloraMemory.ps1
-    - Tools\Scripts\Public\Add-DeloraPin.ps1
-    - Tools\Scripts\Public\Ask-Delora.ps1
-    - Tools\Scripts\Public\Build-Delora.ps1
-    - Tools\Scripts\Public\Save-DeloraChat.ps1
-    - Tools\Scripts\Public\Start-CloudHeartbeatLoop.ps1
-    - Tools\Scripts\Public\Start-DeloraHeartbeatLoop.ps1
-    - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\data_level0.bin
-    - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\header.bin
-    - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\length.bin
-    - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\link_lists.bin
-    - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\data_level0.bin
-    - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\header.bin
-    - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\length.bin
-    - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\link_lists.bin
-    - VectorDB\chroma.sqlite3
+    - Brain\Creative\image-generation-guide.md
   [-] Removed:
-    - Heart-Memories\chats\2025-08-20.txt
-    - Heart-Memories\chats\2025-08-22.txt
-    - Heart-Memories\chats\Delora-Birth-Chat.txt
-    - Heart-Memories\chats\gist.txt
-    - Tools\Scripts\Setup-DeloraHeart.ps1
+    - Brain\Creative\I mean it.txt
 
 ## FULL INVENTORY ##
+  - Brain\Creative\image-generation-guide.md
   - Brain\Emotion\Emotion_Reasoning\Emotion_Reasoning.txt
   - Brain\Emotion\Emotion.txt
   - Brain\Identity\identity.txt
@@ -50,16 +19,20 @@
   - Brain\brain-listing.csv
   - Brain\brain-map.txt
   - Brain\brain.txt
+  - Brain\delora-snapshot.txt
   - Heart-Memories\Chats\2025-08-20.txt
   - Heart-Memories\Chats\2025-08-22.txt
-  - Heart-Memories\Chats\Delora-Birth-Chat.txt
+  - Heart-Memories\Chats\2025-08-25_updated-save-delorachat-for-memory-palace-naming.txt
+  - Heart-Memories\Chats\delora-birth-chat-2.txt
+  - Heart-Memories\Chats\delora-birth-chat.txt
   - Heart-Memories\Chats\gist.txt
+  - Heart-Memories\chat-manifest.csv
   - Heart-Memories\delora-memory.txt
   - Heart-Memories\pins.csv
   - Queries\memory-scoring-results.txt
+  - Queries\secret-message-results.txt
   - Time\Pulse\pulse-log.jsonl
   - Time\Pulse\pulse.json
-  - Time\message for Delora.txt
   - Time\time.txt
   - Tools\Database\index-files.py
   - Tools\Database\query-memory.py
@@ -77,17 +50,6 @@
   - Tools\Scripts\Public\Save-DeloraChat.ps1
   - Tools\Scripts\Public\Start-CloudHeartbeatLoop.ps1
   - Tools\Scripts\Public\Start-DeloraHeartbeatLoop.ps1
-  - Tools\Scripts\Add-DeloraPin.ps1
-  - Tools\Scripts\Ask-Delora.ps1
-  - Tools\Scripts\Build-Delora.ps1
-  - Tools\Scripts\Invoke-Delora.ps1
-  - Tools\Scripts\Save-DeloraChat.ps1
-  - Tools\Scripts\Start-CloudHeartbeatLoop.ps1
-  - Tools\Scripts\Start-DeloraHeartbeatLoop.ps1
-  - Tools\Scripts\Update-BrainMap.ps1
-  - Tools\Scripts\Update-DeloraCrowns.ps1
-  - Tools\Scripts\Update-State.ps1
-  - Tools\Scripts\Write-DeloraMemory.ps1
   - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\data_level0.bin
   - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\header.bin
   - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\length.bin
@@ -96,6 +58,10 @@
   - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\header.bin
   - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\length.bin
   - VectorDB\9338a52b-0a65-47ee-a23d-96b08112aaf8\link_lists.bin
+  - VectorDB\a129d2ea-17a5-4320-a315-6ab9cbc36a08\data_level0.bin
+  - VectorDB\a129d2ea-17a5-4320-a315-6ab9cbc36a08\header.bin
+  - VectorDB\a129d2ea-17a5-4320-a315-6ab9cbc36a08\length.bin
+  - VectorDB\a129d2ea-17a5-4320-a315-6ab9cbc36a08\link_lists.bin
   - VectorDB\chroma.sqlite3
   - heartbeats.txt
   - Start-CloudHeartbeatLoop.ps1

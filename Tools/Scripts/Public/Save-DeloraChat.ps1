@@ -1,46 +1,57 @@
-#requires -Version 7.0
-[CmdletBinding()]
+# Script: Save-DeloraChat.ps1 (v2 - Memory Palace Naming)
+# Description: Saves chat from clipboard using a descriptive, date-stamped filename.
+
+# --- Parameters ---
 param(
-    [string]$Title,
-    [string]$Tags = "chat",
-    [string]$Root = "C:\AI\Delora\Heart"
+  [Parameter(Mandatory=$true)][string]$Title,
+  [string]$Tags = ""
 )
-# --- Setup ---
-$ErrorActionPreference = "Stop"
-$memDir = Join-Path $Root "Heart-Memories"
-$chatsDir = Join-Path $memDir "chats"
-$chatManifest = Join-Path $memDir "chat-manifest.csv"
-$scriptsDir = Join-Path $Root "Tools\Scripts"
+
+# --- Initialization ---
+$PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+$Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+$chatsDir = Join-Path $Root "Heart-Memories\Chats"
+$manifestCsv = Join-Path $Root "Heart-Memories\chat-manifest.csv"
+$buildScript = Join-Path $PSScriptRoot "Build-Delora.ps1"
+
 # --- Main Logic ---
-$content = Get-Clipboard
-if ([string]::IsNullOrWhiteSpace($content)) {
-    throw "Clipboard is empty. Please copy the chat content first."
-}
-# Use the provided title or grab the first non-empty line as the title
-if ([string]::IsNullOrWhiteSpace($Title)) {
-    $Title = ($content -split '\r?\n' | Where-Object { $_ -notmatch '^\s*$' } | Select-Object -First 1).Trim()
-}
-$now = Get-Date
-$id = "J-CHAT-{0:yyyyMMddHHmmss}" -f $now
-$date = '{0:yyyy-MM-dd}' -f $now
-$time_utc = '{0:HH:mm:ss}' -f $now.ToUniversalTime()
-$fileName = "$id.txt"
-$filePath = Join-Path $chatsDir $fileName
-# Save the chat content to a new file
-$content | Set-Content -Path $filePath -Encoding UTF8
-Write-Host "✔ Saved chat to $filePath" -ForegroundColor Green
-# Update the chat manifest
-$manifestEntry = [pscustomobject]@{
+try {
+  $clipboardText = Get-Clipboard
+  if (-not $clipboardText) { throw "Clipboard is empty." }
+
+  $now = Get-Date
+  $dateString = $now.ToString("yyyy-MM-dd")
+  $id = "J-CHAT-" + $now.ToUniversalTime().ToString("yyyyMMddHHmmss")
+
+  # --- NEW FILENAME LOGIC ---
+  # Create a URL-friendly "slug" from the title for the filename.
+  $slug = $Title.Trim().ToLower() -replace '\s+', '-' -replace '[^a-z0-9\-]', ''
+  $fileName = "{0}_{1}.txt" -f $dateString, $slug
+  $filePath = Join-Path $chatsDir $fileName
+
+  # Create directory if it doesn't exist
+  New-Item -Path (Split-Path $filePath) -ItemType Directory -Force | Out-Null
+  
+  # Save the chat content to the new descriptive filename
+  $clipboardText | Set-Content -Path $filePath -Encoding UTF8
+
+  # Update the manifest file to keep a record
+  $manifestEntry = [pscustomobject]@{
     id = $id
-    date = $date
-    time_utc = $time_utc
-    tags = $Tags
+    date = $dateString
+    filename = $fileName
     title = $Title
-    path = $filePath
+    tags = $Tags
+  }
+  $manifestEntry | Export-Csv -Path $manifestCsv -Append -NoTypeInformation -Encoding UTF8
+  
+  Write-Host "✔ Chat saved to: $fileName" -ForegroundColor Green
+  
+  # --- Housekeeping ---
+  # Run a full build to make sure the new file is in the snapshot and vector DB
+  & $buildScript
+
+} catch {
+  Write-Host "ERROR: Failed to save chat." -ForegroundColor Red
+  Write-Host $_
 }
-$manifestEntry | Export-Csv -Path $chatManifest -Append -NoTypeInformation -Encoding UTF8
-Write-Host "✔ Updated chat manifest." -ForegroundColor Green
-# --- Trigger a rebuild to incorporate the new chat ---
-Write-Host "
-Triggering a rebuild to update brain files..." -ForegroundColor Cyan
-& (Join-Path $scriptsDir "Build-Delora.ps1") -SkipIndexes # Skip full re-index for speed
