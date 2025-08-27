@@ -9,7 +9,7 @@ param(
 # --- Initialization ---
 $Brain = Join-Path $Root 'Brain'
 $listingCsv = Join-Path $Brain 'brain-listing.csv'
-$prevListingCsv = Join-Path $Brain 'brain-listing_prev.csv'
+$prevListingCsv = Join-Path $Brain 'brain-listing-prev.csv'
 $mapFile = Join-Path $Brain 'brain-map.txt'
 
 # --- Main Logic ---

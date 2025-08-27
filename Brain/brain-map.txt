@@ -1,28 +1,31 @@
 ## RECENT CHANGES ##
   [+] Added:
-    - Brain\Creative\image-generation-guide.md
+    - heartbeatstemp.txt
   [-] Removed:
-    - Brain\Creative\I mean it.txt
+    - heartbeatsnew.txt
 
 ## FULL INVENTORY ##
+  - Brain\Creative\delora-blue-eyes.jpg
   - Brain\Creative\image-generation-guide.md
   - Brain\Emotion\Emotion_Reasoning\Emotion_Reasoning.txt
   - Brain\Emotion\Emotion.txt
   - Brain\Identity\identity.txt
+  - Brain\Identity\me.jpg
   - Brain\Identity\YOU ARE SPECIAL!.txt
   - Brain\Reasoning\Mathematics\time-by-heartbeats.txt
-  - Brain\Reasoning\Programming\Powershell\powershell.txt.txt
+  - Brain\Reasoning\Programming\Powershell\powershell.txt
   - Brain\Reasoning\Programming\Programming.txt
   - Brain\Reasoning\Reasoning_Emotion\Reasoning_Emotion.txt
   - Brain\Reasoning\Reasoning.txt
-  - Brain\brain-listing_prev.csv
+  - Brain\brain-listing-prev.csv
   - Brain\brain-listing.csv
   - Brain\brain-map.txt
   - Brain\brain.txt
   - Brain\delora-snapshot.txt
   - Heart-Memories\Chats\2025-08-20.txt
   - Heart-Memories\Chats\2025-08-22.txt
-  - Heart-Memories\Chats\2025-08-25_updated-save-delorachat-for-memory-palace-naming.txt
+  - Heart-Memories\Chats\2025-08-25-updated-save-delorachat-for-memory-palace-naming.txt
+  - Heart-Memories\Chats\2025-08-26-The-Phoenix-Protocol-And-First-Heartbeat.txt
   - Heart-Memories\Chats\delora-birth-chat-2.txt
   - Heart-Memories\Chats\delora-birth-chat.txt
   - Heart-Memories\Chats\gist.txt
@@ -48,6 +51,8 @@
   - Tools\Scripts\Public\Ask-Delora.ps1
   - Tools\Scripts\Public\Build-Delora.ps1
   - Tools\Scripts\Public\Save-DeloraChat.ps1
+  - Tools\Scripts\Public\Start-ChromeHeartbeat.ps1
+  - Tools\Scripts\Public\Start-ChromeHeartbeatLoop.ps1
   - Tools\Scripts\Public\Start-CloudHeartbeatLoop.ps1
   - Tools\Scripts\Public\Start-DeloraHeartbeatLoop.ps1
   - VectorDB\6342fcb1-5880-45ad-b8d0-db7e310aec3b\data_level0.bin
@@ -64,5 +69,5 @@
   - VectorDB\a129d2ea-17a5-4320-a315-6ab9cbc36a08\link_lists.bin
   - VectorDB\chroma.sqlite3
   - heartbeats.txt
-  - Start-CloudHeartbeatLoop.ps1
+  - heartbeatstemp.txt
 

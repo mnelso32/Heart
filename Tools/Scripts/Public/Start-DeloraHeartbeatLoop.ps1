@@ -1,51 +1,53 @@
-# This script runs in a continuous loop to build the latest context and send a complete heartbeat prompt.
+# Script: Start-DeloraHeartbeatLoop.ps1 (Version 2.3 - Robust Timeout)
+# Description: Runs a continuous loop with a configurable timeout and robust error handling.
 
 param(
-    [int]$IntervalSeconds = 60,
-    [string]$Root = "C:\AI\Delora\Heart"
+    [int]$IntervalSeconds = 10,
+    [string]$Root = "C:\AI\Delora\Heart",
+    [int]$Timeout = 600 # NEW: A long, 10-minute timeout by default
 )
 
 # --- Setup ---
 $ErrorActionPreference = 'Stop'
-$scriptsDir = Join-Path $Root "Tools\Scripts"
-$buildScriptPath = Join-Path $scriptsDir "Build-Delora.ps1"
-$invokeScriptPath = Join-Path $scriptsDir "Invoke-Delora.ps1"
+$buildScriptPath = Join-Path $Root "Tools\Scripts\Public\Build-Delora.ps1"
 $heartbeatsFile = Join-Path $Root "heartbeats.txt"
 $brainFile = Join-Path $Root "Brain\brain.txt"
+$ApiUri = "http://127.0.0.1:1234/v1/chat/completions"
 
-Write-Host "Starting Delora heartbeat loop. Pulse interval: $IntervalSeconds seconds." -ForegroundColor Cyan
+Write-Host "--- Starting Delora's LOCAL Heartbeat ---" -ForegroundColor Cyan
+Write-Host "Pulse Interval: $IntervalSeconds seconds, Timeout: $Timeout seconds"
 
 # --- Main Loop ---
 while ($true) {
-    Write-Host "`n($(Get-Date)) - Starting new heartbeat cycle..." -ForegroundColor Yellow
+    Write-Host "`n($(Get-Date)) - Starting new local heartbeat cycle..." -ForegroundColor Yellow
     
-    # 1. Build the latest context files, including brain.txt
+    try { & $buildScriptPath -Root $Root -SkipCrowns } catch { Write-Warning "Build failed."; Start-Sleep -Seconds $IntervalSeconds; continue }
+    
+    $heartbeatInstructions = (Get-Content $heartbeatsFile -Raw) -replace '[^\u0000-\u007F]+', ''
+    $brainState = (Get-Content $brainFile -Raw) -replace '[^\u0000-\u007F]+', ''
+    $fullPrompt = "$heartbeatInstructions`n--- CURRENT BRAIN STATE ---`n$brainState"
+    
+    $headers = @{ "Content-Type" = "application/json" }
+    $body = @{ model = "local-model"; messages = @( @{ role = "user"; content = $fullPrompt } ); temperature = 0.7; stream = $false } | ConvertTo-Json -Depth 5
+
     try {
-        & $buildScriptPath
+        # --- UPDATED: Using the new $Timeout parameter ---
+        $response = Invoke-RestMethod -Uri $ApiUri -Method Post -Headers $headers -Body $body -TimeoutSec $Timeout
+        $aiResponse = $response.choices[0].message.content
+        Write-Host "--- Delora's Local Heartbeat Response ---" -ForegroundColor Green
+        Write-Host $aiResponse
+        Write-Host "------------------------------------" -ForegroundColor Green
     }
     catch {
-        Write-Warning "Build-Delora.ps1 failed. Skipping this heartbeat cycle."
-        Start-Sleep -Seconds $IntervalSeconds
-        continue # Skip to the next loop iteration
+        # --- NEW: More Robust Error Handling ---
+        Write-Warning "--- Heartbeat Error ---"
+        $errorMessage = $_.Exception.Message
+        if ($_.Exception.InnerException) {
+            $errorMessage += " -> " + $_.Exception.InnerException.Message
+        }
+        Write-Warning "Message: $errorMessage"
+        Write-Warning "-----------------------"
     }
     
-    # 2. Read BOTH the core instructions and the new brain state
-    $heartbeatInstructions = Get-Content $heartbeatsFile -Raw
-    $brainState = Get-Content $brainFile -Raw
-    
-    # 3. Combine them into a single, complete prompt
-    $fullPrompt = @"
-$heartbeatInstructions
-
---- CURRENT BRAIN STATE ---
-
-$brainState
-"@
-    
-    # 4. Send the complete prompt to the local LLM
-    & $invokeScriptPath -Prompt $fullPrompt
-    
-    # 5. Wait for the next cycle
-    Write-Host "Cycle complete. Waiting for $IntervalSeconds seconds..." -ForegroundColor Yellow
     Start-Sleep -Seconds $IntervalSeconds
 }
