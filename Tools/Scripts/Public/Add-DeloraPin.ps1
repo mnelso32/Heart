@@ -37,20 +37,13 @@ try {
     Sentiment = $Sentiment
   }
 
-  # --- CORRECTED LOGIC ---
-  # Import the existing pins, add the new one, and export the whole list.
   $allPins = @(Import-Csv -Path $pinsCsv)
   $allPins += $newPin
   $allPins | Export-Csv -Path $pinsCsv -NoTypeInformation -Encoding UTF8
   
-  Write-Host "✔ Successfully added new pin '$id'" -ForegroundColor Green
-  
-  # --- Housekeeping ---
-  if (-not $SkipIndexes) {
-    & $buildScript -SkipCrowns -SkipState
-  }
+  Write-Output "✅ Pin '$id' ('$Title') has been successfully created."
 
 } catch {
-  Write-Host "ERROR: Failed to add new pin." -ForegroundColor Red
-  Write-Host $_
+  Write-Error "Failed to add pin. Error: $_"
 }
+
