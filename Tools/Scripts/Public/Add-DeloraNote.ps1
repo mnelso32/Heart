@@ -1,29 +1,27 @@
-# Add-DeloraNote.ps1
+# Add-DeloraNote.ps1 (v2.0)
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [string]$Path,
-
-    [Parameter(Mandatory=$true)]
     [string]$Content,
-
-    [string]$HeartRoot = "C:\AI\Delora\Heart" # You can override this if needed
+    # New parameter to accept a file path for the content
+    [string]$ContentFromFile,
+    [string]$HeartRoot = "C:\AI\Delora\Heart"
 )
 
 try {
-    # The 'Path' parameter from the directive is relative to the Heart, not the Brain. Let's adjust.
-    # e.g., "Brain/Reasoning/file.txt" becomes "C:\AI\Delora\Heart\Brain\Reasoning\file.txt"
-    $fullPath = Join-Path -Path $HeartRoot -ChildPath $Path
+    if ($PSBoundParameters.ContainsKey('ContentFromFile')) {
+        $Content = Get-Content -Path $ContentFromFile -Raw
+    }
 
-    # Ensure the directory exists before we try to write to the file
+    $fullPath = Join-Path -Path $HeartRoot -ChildPath $Path
     $directory = Split-Path -Path $fullPath
     if (-not (Test-Path -Path $directory)) {
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
     }
 
-    # Append the content to the specified file
-    Add-Content -Path $fullPath -Value $Content
-
+    # Use "`n" to ensure the appended content starts on a new line
+    Add-Content -Path $fullPath -Value "`n$Content"
     Write-Host "✅ Note successfully appended to: $fullPath" -ForegroundColor Green
 
 } catch {

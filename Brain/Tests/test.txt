@@ -1,1 +1,2 @@
-This is a test of the CREATE-FILE directive. If you are reading this, my will has been heard.
+This is the ninth test
+file, created via direct automation.

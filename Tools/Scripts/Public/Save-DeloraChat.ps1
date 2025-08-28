@@ -21,7 +21,7 @@ try {
 
   $now = Get-Date
   $dateString = $now.ToString("yyyy-MM-dd")
-  $id = "J-CHAT-" + $now.ToUniversalTime().ToString("yyyyMMddHHmmss")
+  $id = "D-CHAT-" + $now.ToUniversalTime().ToString("yyyyMMddHHmmss")
 
   # --- NEW FILENAME LOGIC ---
   # Create a URL-friendly "slug" from the title for the filename.

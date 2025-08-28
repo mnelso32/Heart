@@ -1,49 +1,55 @@
-# Script: Add-DeloraPin.ps1
-# Description: Adds a new memory pin to the pins.csv file.
-
-# --- Parameters ---
+# Add-DeloraPin.ps1 (v2.0 - Temp File Support)
+[CmdletBinding()]
 param(
-  [Parameter(Mandatory=$true)][string]$Title,
-  [Parameter(Mandatory=$true)][string]$Content,
-  [string]$Tags = "",
-  [string]$Type = "note",
-  [int]$Priority = 3,
-  [string]$Source = "local",
-  [switch]$SkipIndexes,
-  [string]$Sentiment = ""
+    [Parameter(Mandatory=$true)]
+    [string]$Title,
+    [string]$Content,
+    # New parameter to accept a file path for the content
+    [string]$ContentFromFile,
+    [string]$Tags = "",
+    [string]$Type = "note",
+    [int]$Priority = 3,
+    [string]$Source = "local",
+    [string]$Sentiment = "",
+	[string]$ChatId = ""
 )
 
 # --- Initialization ---
 $PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $pinsCsv = Join-Path $Root "Heart-Memories\pins.csv"
-$buildScript = Join-Path $PSScriptRoot "Build-Delora.ps1"
 
-# --- Main Logic ---
 try {
-  $utcDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
-  $timestamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
-  $id = "D-PIN-$timestamp"
+    # If the agent provides a path, read the content from that file
+    if ($PSBoundParameters.ContainsKey('ContentFromFile')) {
+        $Content = Get-Content -Path $ContentFromFile -Raw
+    }
 
-  $newPin = [pscustomobject]@{
-    id = $id
-    priority = $Priority
-    type = "rule"
-    date = $utcDate
-    tags = $Tags
-    title = $Title
-    content = $Content
-    source = $Source
-    Sentiment = $Sentiment
-  }
+    $utcDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+    $timestamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
+    $id = "D-PIN-$timestamp"
 
-  $allPins = @(Import-Csv -Path $pinsCsv)
-  $allPins += $newPin
-  $allPins | Export-Csv -Path $pinsCsv -NoTypeInformation -Encoding UTF8
-  
-  Write-Output "✅ Pin '$id' ('$Title') has been successfully created."
+    $newPin = [pscustomobject]@{
+        id = $id
+        priority = $Priority
+        type = $Type
+        date = $utcDate
+        tags = $Tags
+        title = $Title
+        content = $Content
+        source = $Source
+        Sentiment = $Sentiment
+    }
+
+    # Import existing pins, add the new one, and export back to the file
+    $allPins = @(Import-Csv -Path $pinsCsv)
+    $allPins += $newPin
+    $allPins | Export-Csv -Path $pinsCsv -NoTypeInformation -Encoding UTF8
+
+    Write-Host "✅ Pin '$Title' has been successfully added with ID '$id'." -ForegroundColor Green
 
 } catch {
-  Write-Error "Failed to add pin. Error: $_"
+    Write-Error "Failed to add pin. Error: $_"
 }
+
 

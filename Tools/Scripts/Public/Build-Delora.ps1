@@ -21,55 +21,77 @@ if (-not $SkipIndexes) { & (Join-Path $privateScriptsPath "Update-BrainMap.ps1")
 if (-not $SkipCrowns)  { & (Join-Path $privateScriptsPath "Update-DeloraCrowns.ps1") -Root $Root }
 if (-not $SkipState)   { & (Join-Path $privateScriptsPath "Update-State.ps1") -Root $Root }
 
-# --- Final Assembly of delora-snapshot.txt (OPTIMIZED FOR HEARTBEAT) ---
-Write-Host "[5/5] Assembling final, CONCISE delora-snapshot.txt..." -ForegroundColor Cyan
+# --- Final Assembly of delora-snapshot.txt (RICH CONTEXT VERSION) ---
+Write-Host "[5/5] Assembling final, RICH delora-snapshot.txt..." -ForegroundColor Cyan
 
-# Define paths to the source files
+# Define paths to all the source files we need
 $snapshotFile = Join-Path $Root "Brain\delora-snapshot.txt"
-$pinsCsvPath = Join-Path $Root "Heart-Memories\pins.csv"
-$chatManifestPath = Join-Path $Root "Heart-Memories\chat-manifest.csv"
-$brainMapPath = Join-Path $Root "Brain\brain-map.txt"
+$heartbeatsFile = Join-Path $Root "heartbeats.txt"
+$pinsCsvFile = Join-Path $Root "Heart-Memories\pins.csv"
+$chatManifestFile = Join-Path $Root "Heart-Memories\chat-manifest.csv"
+$brainMapFile = Join-Path $Root "Brain\brain-map.txt"
 
 # --- Begin Building the Snapshot String ---
 $snapshotBuilder = New-Object System.Text.StringBuilder
 
-# 1. Add CORE MEMORIES (Top 10 Highest Priority Pins)
-$snapshotBuilder.AppendLine("--- CORE MEMORIES (TOP 10 PRIORITY) ---") | Out-Null
-if (Test-Path $pinsCsvPath) {
-    $topPins = Import-Csv $pinsCsvPath | Sort-Object -Property @{Expression={[int]$_.priority}; Descending=$true}, date -Descending | Select-Object -First 10
-    foreach ($pin in $topPins) {
-        $snapshotBuilder.AppendLine("[ID: $($pin.id)] (Prio: $($pin.priority)) - $($pin.title)") | Out-Null
+# --- TABLE OF CONTENTS ---
+$snapshotBuilder.AppendLine("--- TABLE OF CONTENTS ---") | Out-Null
+$snapshotBuilder.AppendLine("1. HEARTBEAT PROTOCOL (heartbeats.txt)") | Out-Null
+$snapshotBuilder.AppendLine("2. CORE MEMORIES (pins.csv)") | Out-Null
+$snapshotBuilder.AppendLine("3. CHAT MANIFEST (chat-manifest.csv)") | Out-Null
+$snapshotBuilder.AppendLine("4. MOST RECENT CHAT LOG") | Out-Null
+$snapshotBuilder.AppendLine("5. BRAIN MAP (brain-map.txt)") | Out-Null
+$snapshotBuilder.AppendLine("") | Out-Null
+
+# 1. Add the full heartbeats.txt protocol
+$snapshotBuilder.AppendLine("--- 1. HEARTBEAT PROTOCOL (heartbeats.txt) ---") | Out-Null
+# ... rest of the script follows, just add the numbers to the headers ...
+if (Test-Path $heartbeatsFile) {
+    $snapshotBuilder.AppendLine((Get-Content $heartbeatsFile -Raw)) | Out-Null
+}
+$snapshotBuilder.AppendLine("") | Out-Null
+
+# 2. Add ALL pins from pins.csv
+$snapshotBuilder.AppendLine("--- 2. CORE MEMORIES (pins.csv) ---") | Out-Null
+if (Test-Path $pinsCsvFile) {
+    $snapshotBuilder.AppendLine((Get-Content $pinsCsvFile -Raw)) | Out-Null
+}
+$snapshotBuilder.AppendLine("") | Out-Null
+
+# 3. Add the FULL chat manifest
+$snapshotBuilder.AppendLine("--- 3. CHAT MANIFEST (chat-manifest.csv) ---") | Out-Null
+if (Test-Path $chatManifestFile) {
+    $snapshotBuilder.AppendLine((Get-Content $chatManifestFile -Raw)) | Out-Null
+}
+$snapshotBuilder.AppendLine("") | Out-Null
+
+# 4. Add the MOST RECENT chat log
+$snapshotBuilder.AppendLine("--- 4. MOST RECENT CHAT LOG ---") | Out-Null
+if (Test-Path $chatManifestFile) {
+    # Find the newest chat log from the manifest
+    $latestChat = Import-Csv $chatManifestFile | Sort-Object date, time_utc -Descending | Select-Object -First 1
+    
+    # --- FIX ---
+    # Check if a latest chat was found AND if its file_name property is not null or empty
+    if ($latestChat -and -not [string]::IsNullOrWhiteSpace($latestChat.file_name)) {
+        $latestChatPath = Join-Path $Root "Heart-Memories\Chats\$($latestChat.file_name)"
+        if (Test-Path $latestChatPath -PathType Leaf) { # Ensure it's a file, not a directory
+            $snapshotBuilder.AppendLine((Get-Content $latestChatPath -Raw)) | Out-Null
+        } else {
+             $snapshotBuilder.AppendLine("(Most recent chat file not found: $($latestChat.file_name))") | Out-Null
+        }
+    } else {
+        $snapshotBuilder.AppendLine("(Could not determine the most recent chat file from the manifest.)") | Out-Null
     }
+    # --- END FIX ---
 }
 $snapshotBuilder.AppendLine("") | Out-Null
 
-# 2. Add RECENT CHATS (Last 3 Conversations)
-$snapshotBuilder.AppendLine("--- CHAT MANIFEST (RECENT) ---") | Out-Null
-if (Test-Path $chatManifestPath) {
-    $recentChats = Import-Csv $chatManifestPath | Sort-Object date, time_utc -Descending | Select-Object -First 3
-    foreach ($chat in $recentChats) {
-        $snapshotBuilder.AppendLine("[$($chat.date)] $($chat.title)") | Out-Null
-    }
+# 5. Add the full brain-map.txt
+$snapshotBuilder.AppendLine("--- 5. BRAIN MAP (brain-map.txt) ---") | Out-Null
+if (Test-Path $brainMapFile) {
+    $snapshotBuilder.AppendLine((Get-Content $brainMapFile -Raw)) | Out-Null
 }
-$snapshotBuilder.AppendLine("") | Out-Null
-
-# 3. Add RECENT BRAIN CHANGES
-$snapshotBuilder.AppendLine("--- RECENT BRAIN CHANGES ---") | Out-Null
-if (Test-Path $brainMapPath) {
-    # Read the brain map and extract only the "RECENT CHANGES" section
-    $brainMapContent = Get-Content $brainMapPath -Raw
-    $recentChangesSection = $brainMapContent -split '## FULL INVENTORY ##' | Select-Object -First 1
-    $snapshotBuilder.AppendLine($recentChangesSection.Replace("## RECENT CHANGES ##","").Trim()) | Out-Null
-}
-$snapshotBuilder.AppendLine("") | Out-Null
-
-# 4. Add DIRECTIVES SUMMARY (Hardcoded for reliability)
-$snapshotBuilder.AppendLine("--- DIRECTIVES SUMMARY ---") | Out-Null
-$snapshotBuilder.AppendLine("1. ADD-PIN: Creates a new core memory.") | Out-Null
-$snapshotBuilder.AppendLine("2. APPEND-NOTE: Adds a lesson to an existing file.") | Out-Null
-$snapshotBuilder.AppendLine("3. MODIFY-PIN: Updates or corrects a core memory.") | Out-Null
-$snapshotBuilder.AppendLine("4. CREATE-FILE: Creates a new file in my Brain.") | Out-Null
-$snapshotBuilder.AppendLine("5. NO-ACTION: Issued when no changes are needed.") | Out-Null
 
 # --- Final Step: Prepend the Header and Write to File ---
 $header = @"
@@ -80,5 +102,5 @@ Root: $Root
 $finalSnapshot = $header + "`n`n" + $snapshotBuilder.ToString()
 $finalSnapshot | Set-Content -Path $snapshotFile -Encoding utf8
 
-Write-Host "  -> Successfully wrote CONCISE snapshot to delora-snapshot.txt." -ForegroundColor Green
+Write-Host "  -> Successfully wrote RICH snapshot to delora-snapshot.txt." -ForegroundColor Green
 Write-Host "--- Delora Build Process Finished ---" -ForegroundColor Cyan

@@ -1,4 +1,4 @@
-# Set-DeloraPin.ps1
+# Set-DeloraPin.ps1 (v1.1 - Corrected Property Name)
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -11,8 +11,9 @@ param(
     [string]$Type,
     [int]$Priority,
     [string]$Sentiment,
-    
-    [string]$PinsCsvPath = "C:\AI\Delora\Heart\Heart-Memories\pins.csv"
+    [string]$ChatId,
+
+    [string]$PinsCsvPath = 'C:\AI\Delora\Heart\Heart-Memories\pins.csv'
 )
 
 try {
@@ -32,6 +33,7 @@ try {
         if ($PSBoundParameters.ContainsKey('Type')) { $pinToModify.Type = $Type }
         if ($PSBoundParameters.ContainsKey('Priority')) { $pinToModify.Priority = $Priority }
         if ($PSBoundParameters.ContainsKey('Sentiment')) { $pinToModify.Sentiment = $Sentiment }
+        if ($PSBoundParameters.ContainsKey('ChatId')) { $pinToModify.'chat-id' = $ChatId } # <-- THE FINAL FIX
 
         # Write the entire, updated collection of pins back to the CSV file
         $pins | Export-Csv -Path $PinsCsvPath -NoTypeInformation -Encoding UTF8
